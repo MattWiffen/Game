@@ -84,10 +84,10 @@ class Player(pygame.sprite.Sprite):
                 self.game.spritesheet.get_image(104, 192, 24, 32)
             ],
             "attack_left": [
-                self.game.spritesheet.get_image(6, 224, 24, 32),
-                self.game.spritesheet.get_image(34, 224, 24, 32),
-                self.game.spritesheet.get_image(66, 224, 24, 32),
-                self.game.spritesheet.get_image(98, 224, 24, 32)
+                self.game.spritesheet.get_image(0, 224, 22, 32),
+                self.game.spritesheet.get_image(32, 224, 22, 32),
+                self.game.spritesheet.get_image(64, 224, 22, 32),
+                self.game.spritesheet.get_image(97, 224, 22, 32)
             ]
         }
 
