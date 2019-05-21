@@ -4,14 +4,13 @@ from settings import *
 
 class Spritesheet:
         def __init__(self, filename):
-            self.spritesheet = pygame.image.load(filename).convert()
+            self.spritesheet = pygame.image.load(filename).convert_alpha()
 
         def get_image(self, x, y, width, height):
-            image = pygame.Surface((width, height))
+            image = pygame.Surface((width, height), pygame.SRCALPHA)
             image.blit(self.spritesheet, (0, 0), (x, y, width, height))
             rect = image.get_rect()
             image = pygame.transform.scale(image, (rect.width*2, rect.height*2))
-            image.set_colorkey((0, 0, 0))
             return image
 
 
@@ -84,10 +83,10 @@ class Player(pygame.sprite.Sprite):
                 self.game.spritesheet.get_image(104, 192, 24, 32)
             ],
             "attack_left": [
-                self.game.spritesheet.get_image(0, 224, 22, 32),
-                self.game.spritesheet.get_image(32, 224, 22, 32),
-                self.game.spritesheet.get_image(64, 224, 22, 32),
-                self.game.spritesheet.get_image(97, 224, 22, 32)
+                self.game.spritesheet.get_image(0, 224, 23, 32),
+                self.game.spritesheet.get_image(32, 224, 23, 32),
+                self.game.spritesheet.get_image(64, 224, 23, 32),
+                self.game.spritesheet.get_image(97, 224, 23, 32)
             ]
         }
 

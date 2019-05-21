@@ -1,6 +1,6 @@
 import pygame
 
-FPS = 300
+FPS = 60
 TILE_SIZE = 32
 
 WIDTH = TILE_SIZE * 20

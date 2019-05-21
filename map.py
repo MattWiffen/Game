@@ -39,7 +39,7 @@ class Camera:
         return rect.move(self.camera.topleft)
 
     def update(self, target):
-        if not target.attacking:
+        if not target.attacking or target.walking:
             x = -target.rect.x + int(WIDTH / 2)
             y = -target.rect.y + int(HEIGHT / 2)
 
