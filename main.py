@@ -13,6 +13,7 @@ class Game:
         self.clock = pygame.time.Clock()
         self.cooldown = 0
         self.delay = 0.2
+        self.dev = False
 
     def load_data(self):
         game_folder = os.path.dirname(__file__)
@@ -55,8 +56,9 @@ class Game:
         self.screen.blit(self.map_img, self.camera.apply_rect(self.map_rect))
         for sprite in self.all_sprites:
             self.screen.blit(sprite.image, self.camera.apply(sprite))
-            #pygame.draw.rect(self.screen, (255, 0, 255), self.camera.apply_rect(sprite.rect), 2)
-            #pygame.draw.rect(self.screen, (0, 255, 255), self.camera.apply_rect(sprite.hit_rect), 2)
+            if self.dev:
+                pygame.draw.rect(self.screen, (255, 0, 255), self.camera.apply_rect(sprite.rect), 2)
+                pygame.draw.rect(self.screen, (0, 255, 255), self.camera.apply_rect(sprite.hit_rect), 2)
 
         pygame.display.flip()
 
@@ -67,6 +69,9 @@ class Game:
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     self.quit()
+                if event.key == pygame.K_k:
+                    self.dev = not self.dev
+
 
 
 # create the game object

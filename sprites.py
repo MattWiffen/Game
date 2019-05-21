@@ -106,12 +106,16 @@ class Player(pygame.sprite.Sprite):
 
                 if self.vx > 0:
                     self.image = self.frames["right"][self.current_frame_walk]
+                    self.rect = self.image.get_rect()
                 elif self.vx < 0:
                     self.image = self.frames["left"][self.current_frame_walk]
+                    self.rect = self.image.get_rect()
                 elif self.vy > 0:
                     self.image = self.frames["down"][self.current_frame_walk]
+                    self.rect = self.image.get_rect()
                 elif self.vy < 0:
                     self.image = self.frames["up"][self.current_frame_walk]
+                    self.rect = self.image.get_rect()
 
         elif self.attacking:
             if now - self.last_update_atk > 100:
@@ -143,6 +147,9 @@ class Player(pygame.sprite.Sprite):
                     self.rect = self.image.get_rect()
                     self.rect.right = self.right
 
+                else:
+                    self.walking = False
+
         if not self.walking and not self.attacking:
             self.image = self.frames[self.last_direction][0]
             self.rect = self.image.get_rect()
@@ -153,6 +160,7 @@ class Player(pygame.sprite.Sprite):
             self.x = round(self.x / TILE_SIZE)*TILE_SIZE
             self.y = round(self.y / TILE_SIZE)*TILE_SIZE
             self.vx, self.vy = 0, 0
+
             if keys[pygame.K_LEFT] or keys[pygame.K_a]:
                 self.last_direction = "left"
                 self.attacking = False
@@ -161,6 +169,7 @@ class Player(pygame.sprite.Sprite):
                     return
                 self.vx = -PLAYER_SPEED
                 self.game.cooldown = self.game.delay
+
             elif keys[pygame.K_RIGHT] or keys[pygame.K_d]:
                 self.last_direction = "right"
                 self.attacking = False
@@ -169,6 +178,7 @@ class Player(pygame.sprite.Sprite):
                     return
                 self.vx = PLAYER_SPEED
                 self.game.cooldown = self.game.delay
+
             elif keys[pygame.K_UP] or keys[pygame.K_w]:
                 self.last_direction = "up"
                 self.attacking = False
@@ -177,6 +187,7 @@ class Player(pygame.sprite.Sprite):
                     return
                 self.vy = -PLAYER_SPEED
                 self.game.cooldown = self.game.delay
+
             elif keys[pygame.K_DOWN] or keys[pygame.K_s]:
                 self.last_direction = "down"
                 self.attacking = False
@@ -185,6 +196,7 @@ class Player(pygame.sprite.Sprite):
                     return
                 self.vy = PLAYER_SPEED
                 self.game.cooldown = self.game.delay
+
             elif keys[pygame.K_SPACE]:
                 self.attacking = True
 
