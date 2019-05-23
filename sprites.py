@@ -102,7 +102,7 @@ class Player(pygame.sprite.Sprite):
             if now - self.last_update_walk > 200:
                 self.last_update_walk = now
                 self.current_frame_walk = (self.current_frame_walk + 1) % 4
-                self.current_frame_atk = 0
+                self.current_frame_atk = -1
 
                 if self.vx > 0:
                     self.image = self.frames["right"][self.current_frame_walk]
@@ -231,3 +231,4 @@ class Obstacle(pygame.sprite.Sprite):
         self.rect.x = x
         self.rect.y = y
 
+#TODO: Add sounds

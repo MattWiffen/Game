@@ -14,13 +14,17 @@ class Game:
         self.cooldown = 0
         self.delay = 0.2
         self.dev = False
+        self.load_data()
 
     def load_data(self):
         game_folder = os.path.dirname(__file__)
         sprite_folder = os.path.join(game_folder, "sprites")
         map_folder = os.path.join(game_folder, "maps")
         self.spritesheet = Spritesheet(os.path.join(sprite_folder, "character.png"))
-        self.map = TiledMap(os.path.join(map_folder, "new_world.tmx"))
+        self.load_map(map_folder, "new_world.tmx")
+
+    def load_map(self, map_folder, map_name):
+        self.map = TiledMap(os.path.join(map_folder, map_name))
         self.map_img = self.map.make_map()
         self.map_rect = self.map_img.get_rect()
 
@@ -77,6 +81,5 @@ class Game:
 # create the game object
 g = Game()
 while True:
-    g.load_data()
     g.new()
     g.run()
