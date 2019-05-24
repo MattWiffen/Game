@@ -7,6 +7,7 @@ import os
 
 class Game:
     def __init__(self):
+        pygame.mixer.pre_init(44100, -16, 4, 2048)
         pygame.init()
         self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
         pygame.display.set_caption("Title")
@@ -14,29 +15,47 @@ class Game:
         self.cooldown = 0
         self.delay = 0.2
         self.dev = False
+        self.mapX = 1
+        self.mapY = 0
         self.load_data()
 
     def load_data(self):
         game_folder = os.path.dirname(__file__)
         sprite_folder = os.path.join(game_folder, "sprites")
-        map_folder = os.path.join(game_folder, "maps")
+        sound_folder = os.path.join(game_folder, "sounds")
+        self.map_folder = os.path.join(game_folder, "maps")
         self.spritesheet = Spritesheet(os.path.join(sprite_folder, "character.png"))
-        self.load_map(map_folder, "new_world.tmx")
+        self.all_sprites = pygame.sprite.Group()
+        self.load_map(self.map_folder, LOCATION[self.mapX][self.mapY])
+
+        self.sound_walking = []
+        for effect in SOUND_WALKING:
+            self.sound_walking.append(pygame.mixer.Sound(os.path.join(sound_folder, effect)))
 
     def load_map(self, map_folder, map_name):
         self.map = TiledMap(os.path.join(map_folder, map_name))
         self.map_img = self.map.make_map()
         self.map_rect = self.map_img.get_rect()
+        self.load_objects()
+
+    def load_objects(self):
+        self.obstacles = pygame.sprite.Group()
+        for tile_object in self.map.tmx_data.objects:
+            if tile_object.name == "obstacle":
+                Obstacle(
+                    self,
+                    tile_object.x * 2,
+                    tile_object.y * 2,
+                    tile_object.width * 2,
+                    tile_object.height * 2,
+                    tile_object.type,
+                )
+        self.camera = Camera(self.map.width, self.map.height)
 
     def new(self):
-        self.all_sprites = pygame.sprite.Group()
-        self.obstacles = pygame.sprite.Group()
         for tile_object in self.map.tmx_data.objects:
             if tile_object.name == "player":
                 self.player = Player(self, tile_object.x*2, tile_object.y*2)
-            if tile_object.name == "wall":
-                Obstacle(self, tile_object.x*2, tile_object.y*2, tile_object.width*2, tile_object.height*2)
-        self.camera = Camera(self.map.width, self.map.height)
 
     def run(self):
         # game loop - set self.playing = False to end the game
@@ -75,6 +94,8 @@ class Game:
                     self.quit()
                 if event.key == pygame.K_k:
                     self.dev = not self.dev
+                if event.key == pygame.K_l:
+                    self.load_map(self.map_folder, "new_world2.tmx")
 
 
 

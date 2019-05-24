@@ -1,4 +1,5 @@
 import pygame
+import itertools
 from settings import *
 
 
@@ -25,6 +26,7 @@ class Player(pygame.sprite.Sprite):
         self.last_update_walk = 0
         self.current_frame_atk = 0
         self.last_update_atk = 0
+        self.sound_walking_loop = itertools.cycle(self.game.sound_walking)
         self.last_direction = "down"
         self.load_images()
         self.image = self.frames["down"][0]
@@ -32,6 +34,9 @@ class Player(pygame.sprite.Sprite):
         self.hit_rect = PLAYER_HIT_RECT
         self.rect.bottomleft = self.hit_rect.bottomleft
         self.vx, self.vy = 0, 0
+        self.x, self.y = x, y
+
+    def place(self, x, y):
         self.x = x
         self.y = y
 
@@ -103,6 +108,10 @@ class Player(pygame.sprite.Sprite):
                 self.last_update_walk = now
                 self.current_frame_walk = (self.current_frame_walk + 1) % 4
                 self.current_frame_atk = -1
+                if not self.current_frame_walk % 2 == 0:
+                    sound = next(self.sound_walking_loop)
+                    sound.set_volume(SFX_VOLUME)
+                    sound.play()
 
                 if self.vx > 0:
                     self.image = self.frames["right"][self.current_frame_walk]
@@ -152,6 +161,7 @@ class Player(pygame.sprite.Sprite):
 
         if not self.walking and not self.attacking:
             self.image = self.frames[self.last_direction][0]
+            self.current_frame_walk = 0
             self.rect = self.image.get_rect()
 
     def get_keys(self):
@@ -165,7 +175,12 @@ class Player(pygame.sprite.Sprite):
                 self.last_direction = "left"
                 self.attacking = False
                 new_rect = self.hit_rect.move(-TILE_SIZE, 0)
-                if self.collide(new_rect):
+                if self.collide(new_rect, "wall"):
+                    return
+                elif self.collide(new_rect, "left"):
+                    self.game.mapX -= 1
+                    self.game.load_map(self.game.map_folder, LOCATION[self.game.mapX][self.game.mapY])
+                    self.place(self.game.map.width, self.y)
                     return
                 self.vx = -PLAYER_SPEED
                 self.game.cooldown = self.game.delay
@@ -174,7 +189,12 @@ class Player(pygame.sprite.Sprite):
                 self.last_direction = "right"
                 self.attacking = False
                 new_rect = self.hit_rect.move(TILE_SIZE, 0)
-                if self.collide(new_rect):
+                if self.collide(new_rect, "wall"):
+                    return
+                elif self.collide(new_rect, "right"):
+                    self.game.mapX += 1
+                    self.game.load_map(self.game.map_folder, LOCATION[self.game.mapX][self.game.mapY])
+                    self.place(0 - TILE_SIZE, self.y)
                     return
                 self.vx = PLAYER_SPEED
                 self.game.cooldown = self.game.delay
@@ -183,7 +203,13 @@ class Player(pygame.sprite.Sprite):
                 self.last_direction = "up"
                 self.attacking = False
                 new_rect = self.hit_rect.move(0, -TILE_SIZE)
-                if self.collide(new_rect):
+                if self.collide(new_rect, "wall"):
+                    return
+                elif self.collide(new_rect, "up"):
+                    self.game.mapY -= 1
+                    self.game.load_map(self.game.map_folder, LOCATION[self.game.mapX][self.game.mapY - 1])
+                    self.place(self.x, self.game.map.height)
+                    self.map_transition = True
                     return
                 self.vy = -PLAYER_SPEED
                 self.game.cooldown = self.game.delay
@@ -192,7 +218,12 @@ class Player(pygame.sprite.Sprite):
                 self.last_direction = "down"
                 self.attacking = False
                 new_rect = self.hit_rect.move(0, TILE_SIZE)
-                if self.collide(new_rect):
+                if self.collide(new_rect, "wall"):
+                    return
+                elif self.collide(new_rect, "down"):
+                    self.game.mapY += 1
+                    self.game.load_map(self.game.map_folder, LOCATION[self.game.mapX][self.game.mapY + 1])
+                    self.place(self.x, 0 - TILE_SIZE)
                     return
                 self.vy = PLAYER_SPEED
                 self.game.cooldown = self.game.delay
@@ -200,10 +231,11 @@ class Player(pygame.sprite.Sprite):
             elif keys[pygame.K_SPACE]:
                 self.attacking = True
 
-    def collide(self, rect):
-        for wall in self.game.obstacles:
-            if rect.colliderect(wall.rect):
-                return True
+    def collide(self, rect, obstacle_name):
+        for obstacle in self.game.obstacles:
+            if rect.colliderect(obstacle.rect):
+                if obstacle.name == obstacle_name:
+                    return True
         return False
 
     def update(self):
@@ -221,10 +253,11 @@ class Player(pygame.sprite.Sprite):
 
 
 class Obstacle(pygame.sprite.Sprite):
-    def __init__(self, game, x, y, w, h):
+    def __init__(self, game, x, y, w, h, name):
         self.groups = game.obstacles
         pygame.sprite.Sprite.__init__(self, self.groups)
         self.game = game
+        self.name = name
         self.rect = pygame.Rect(x, y, w, h)
         self.x = x
         self.y = y
