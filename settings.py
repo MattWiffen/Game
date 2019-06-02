@@ -12,7 +12,7 @@ PLAYER_HIT_RECT = pygame.Rect(0, 0, TILE_SIZE, TILE_SIZE)
 # LOCATION[X][Y]
 LOCATION = [
     [
-        "new_world2.tmx"
+        "start2.tmx", "start.tmx"
     ],
     [
         "new_world.tmx"

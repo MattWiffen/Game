@@ -15,7 +15,7 @@ class Game:
         self.cooldown = 0
         self.delay = 0.2
         self.dev = False
-        self.mapX = 1
+        self.mapX = 0
         self.mapY = 0
         self.load_data()
 

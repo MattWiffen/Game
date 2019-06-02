@@ -206,8 +206,9 @@ class Player(pygame.sprite.Sprite):
                 if self.collide(new_rect, "wall"):
                     return
                 elif self.collide(new_rect, "up"):
-                    self.game.mapY -= 1
-                    self.game.load_map(self.game.map_folder, LOCATION[self.game.mapX][self.game.mapY - 1])
+                    self.game.mapY += 1
+                    self.game.load_map(self.game.map_folder, LOCATION[self.game.mapX][self.game.mapY])
+                    print(self.game.mapY)
                     self.place(self.x, self.game.map.height)
                     self.map_transition = True
                     return
@@ -221,8 +222,8 @@ class Player(pygame.sprite.Sprite):
                 if self.collide(new_rect, "wall"):
                     return
                 elif self.collide(new_rect, "down"):
-                    self.game.mapY += 1
-                    self.game.load_map(self.game.map_folder, LOCATION[self.game.mapX][self.game.mapY + 1])
+                    self.game.mapY -= 1
+                    self.game.load_map(self.game.map_folder, LOCATION[self.game.mapX][self.game.mapY])
                     self.place(self.x, 0 - TILE_SIZE)
                     return
                 self.vy = PLAYER_SPEED
