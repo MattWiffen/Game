@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.2" tiledversion="1.2.4" orientation="orthogonal" renderorder="left-down" width="30" height="30" tilewidth="16" tileheight="16" infinite="0" nextlayerid="8" nextobjectid="1">
+<map version="1.2" tiledversion="2019.05.08" orientation="orthogonal" renderorder="left-down" width="30" height="30" tilewidth="16" tileheight="16" infinite="0" nextlayerid="9" nextobjectid="14">
  <tileset firstgid="1" source="zelda_style.tsx"/>
  <layer id="2" name="terrain" width="30" height="30">
   <data encoding="csv">
@@ -171,4 +171,19 @@
 726,726,726,726,726,726,726,726,726,726,726,726,726,726,726,726,726,726,726,726,726,726,726,726,726,726,726,726,726,726
 </data>
  </layer>
+ <objectgroup id="8" name="obstacles">
+  <object id="1" name="obstacle" type="wall" x="52" y="116" width="24" height="24"/>
+  <object id="2" name="obstacle" type="wall" x="132" y="68" width="24" height="24"/>
+  <object id="3" name="obstacle" type="wall" x="228" y="132" width="24" height="24"/>
+  <object id="4" name="obstacle" type="wall" x="292" y="68" width="24" height="24"/>
+  <object id="5" name="obstacle" type="wall" x="404" y="132" width="24" height="24"/>
+  <object id="6" name="obstacle" type="wall" x="164" y="308" width="24" height="24"/>
+  <object id="7" name="obstacle" type="wall" x="308" y="308" width="24" height="24"/>
+  <object id="8" name="obstacle" type="wall" x="244" y="404" width="24" height="24"/>
+  <object id="9" name="obstacle" type="wall" x="404" y="388" width="24" height="24"/>
+  <object id="10" name="obstacle" type="wall" x="4" y="468" width="472" height="8"/>
+  <object id="11" name="obstacle" type="wall" x="68" y="372" width="24" height="24"/>
+  <object id="12" name="obstacle" type="wall" x="4" y="4" width="472" height="8"/>
+  <object id="13" name="obstacle" type="left" x="-12" y="4" width="8" height="472"/>
+ </objectgroup>
 </map>

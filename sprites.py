@@ -130,6 +130,10 @@ class Player(pygame.sprite.Sprite):
             if now - self.last_update_atk > 100:
                 self.last_update_atk = now
                 self.current_frame_atk = (self.current_frame_atk + 1) % 5
+                if self.current_frame_atk == 0:
+                    sound = self.game.sound_sword
+                    sound.set_volume(SFX_VOLUME)
+                    sound.play()
                 if self.current_frame_atk == 4:
                     self.attacking = False
                 if self.last_direction == "right" and self.attacking is True:
@@ -264,5 +268,3 @@ class Obstacle(pygame.sprite.Sprite):
         self.y = y
         self.rect.x = x
         self.rect.y = y
-
-#TODO: Add sounds

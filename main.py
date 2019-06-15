@@ -29,6 +29,7 @@ class Game:
         self.load_map(self.map_folder, LOCATION[self.mapX][self.mapY])
 
         self.sound_walking = []
+        self.sound_sword = pygame.mixer.Sound(os.path.join(sound_folder, SOUND_SWORD))
         for effect in SOUND_WALKING:
             self.sound_walking.append(pygame.mixer.Sound(os.path.join(sound_folder, effect)))
 

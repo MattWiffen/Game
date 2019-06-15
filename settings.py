@@ -15,10 +15,11 @@ LOCATION = [
         "start2.tmx", "start.tmx"
     ],
     [
-        "new_world.tmx"
+        "start3.tmx"
     ]
 ]
 
 # SOUNDS
 SFX_VOLUME = 0.05
 SOUND_WALKING = ["footstep1.wav", "footstep2.wav"]
+SOUND_SWORD = "sword1.wav"
