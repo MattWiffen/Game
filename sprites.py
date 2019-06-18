@@ -17,7 +17,7 @@ class Spritesheet:
 
 class Player(pygame.sprite.Sprite):
     def __init__(self, game, x, y):
-        self.groups = game.all_sprites
+        self.groups = game.all_sprites, game.player_group
         pygame.sprite.Sprite.__init__(self, self.groups)
         self.game = game
         self.walking = False
@@ -35,6 +35,10 @@ class Player(pygame.sprite.Sprite):
         self.rect.bottomleft = self.hit_rect.bottomleft
         self.vx, self.vy = 0, 0
         self.x, self.y = x, y
+
+        self.level = 7
+        self.max_health = 16  # multiple of 4
+        self.health = 6  # less than max
 
     def place(self, x, y):
         self.x = x
@@ -257,6 +261,18 @@ class Player(pygame.sprite.Sprite):
             self.hit_rect.bottomleft = self.rect.bottomleft
 
 
+class NPC(pygame.sprite.Sprite):
+    def __init__(self, game, x, y):
+        self.groups = game.all_sprites, game.npcs
+        pygame.sprite.Sprite.__init__(self, self.groups)
+        self.game = game
+        self.current_map = (game.mapX, game.mapY)
+        self.image = self.game.NPC_spritesheet.get_image(0, 0, 16, 32)
+        self.rect = self.image.get_rect()
+        self.x, self.y = x, y
+        self.rect.topleft = (x,y)
+
+
 class Obstacle(pygame.sprite.Sprite):
     def __init__(self, game, x, y, w, h, name):
         self.groups = game.obstacles
@@ -264,7 +280,6 @@ class Obstacle(pygame.sprite.Sprite):
         self.game = game
         self.name = name
         self.rect = pygame.Rect(x, y, w, h)
-        self.x = x
-        self.y = y
+        self.x, self.y = x, y
         self.rect.x = x
         self.rect.y = y

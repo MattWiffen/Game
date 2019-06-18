@@ -16,6 +16,9 @@ LOCATION = [
     ],
     [
         "start3.tmx"
+    ],
+    [
+        "start4.tmx"
     ]
 ]
 
