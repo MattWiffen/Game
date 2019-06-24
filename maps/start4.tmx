@@ -338,6 +338,6 @@
   <object id="31" name="obstacle" type="wall" x="436" y="436" width="8" height="8"/>
   <object id="32" name="obstacle" type="wall" x="20" y="340" width="24" height="24"/>
   <object id="33" name="obstacle" type="left" x="-12" y="4" width="8" height="472"/>
-  <object id="34" name="NPC" x="80" y="160" width="16" height="16"/>
+  <object id="34" name="NPC" type="npc1" x="80" y="160" width="16" height="16"/>
  </objectgroup>
 </map>

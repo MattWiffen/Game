@@ -4,6 +4,7 @@ from map import *
 from settings import *
 import os
 
+
 class Game:
     def __init__(self):
         pygame.mixer.pre_init(44100, -16, 4, 2048)
@@ -25,11 +26,13 @@ class Game:
         self.spritesheet = Spritesheet(os.path.join(sprite_folder, "character.png"))
         self.NPC_spritesheet = Spritesheet(os.path.join(sprite_folder, "NPC.png"))
         self.objects_spritesheet = Spritesheet(os.path.join(sprite_folder, "objects.png"))
+        self.font_spritesheet = Spritesheet(os.path.join(sprite_folder, "font.png"))
         self.all_sprites = pygame.sprite.Group()
         self.player_group = pygame.sprite.Group()
         self.npcs = pygame.sprite.Group()
         self.load_map(self.map_folder, LOCATION[self.mapX][self.mapY])
         self.load_HUD()
+        self.load_font()
 
         self.sound_walking = []
         self.sound_sword = pygame.mixer.Sound(os.path.join(sound_folder, SOUND_SWORD))
@@ -60,6 +63,41 @@ class Game:
                 self.objects_spritesheet.get_image(64, 2, 14, 13),
             ]
         }
+
+    def load_font(self):
+        self.font_elements = {
+            "text": {
+                "0": self.font_spritesheet.get_image(216, 0, 8, 8),
+                "1": self.font_spritesheet.get_image(224, 0, 8, 8),
+                "2": self.font_spritesheet.get_image(232, 0, 8, 8),
+                "3": self.font_spritesheet.get_image(216, 8, 8, 8),
+                "4": self.font_spritesheet.get_image(224, 8, 8, 8),
+                "5": self.font_spritesheet.get_image(232, 8, 8, 8),
+                "6": self.font_spritesheet.get_image(216, 16, 8, 8),
+                "7": self.font_spritesheet.get_image(224, 16, 8, 8),
+                "8": self.font_spritesheet.get_image(232, 16, 8, 8),
+                "9": self.font_spritesheet.get_image(224, 24, 8, 8),
+                ".": self.font_spritesheet.get_image(2, 32, 8, 16),
+                ",": self.font_spritesheet.get_image(8, 32, 8, 16),
+                "!": self.font_spritesheet.get_image(16, 32, 8, 16),
+                "?": self.font_spritesheet.get_image(32, 32, 8, 16),
+                ":": self.font_spritesheet.get_image(80, 32, 8, 16),
+                ";": self.font_spritesheet.get_image(88, 32, 8, 16),
+                "'": self.font_spritesheet.get_image(96, 32, 8, 16),
+                '"': self.font_spritesheet.get_image(16, 32, 8, 16)
+            },
+            "background": self.font_spritesheet.get_image(0, 48, 240, 72)
+        }
+
+        count = 0
+        for i in "AaBbCcDdEeFfGgHhIiJjKkLlMm":
+            self.font_elements["text"][i] = self.font_spritesheet.get_image(count, 0, 8, 16)
+            count += 8
+
+        count = 0
+        for i in "NnOoPpQqRrSsTtUuVvWwXxYyZz":
+            self.font_elements["text"][i] = self.font_spritesheet.get_image(count, 16, 8, 16)
+            count += 8
 
     def load_map(self, map_folder, map_name):
         self.map = TiledMap(os.path.join(map_folder, map_name))
@@ -93,7 +131,7 @@ class Game:
             self.screen.blit(self.HUD_elements["numbers"][int(str(self.player.level)[1])], (x+24, y+66))
         self.screen.blit(self.HUD_elements["sword"], (x+14, y+14))
 
-        for i in range(self.player.max_health //4):
+        for i in range(self.player.max_health // 4):
             self.screen.blit(self.HUD_elements["health"][0], (x + 60 + i * 32, y + 10))
         j = 0
         for j in range(self.player.health // 4):
@@ -101,10 +139,20 @@ class Game:
         if not self.player.health % 4 == 0:
             self.screen.blit(self.HUD_elements["health"][self.player.health % 4], (x + 92 + j * 32, y + 10))
 
-
-
-
-
+    def draw_text(self, string, x_offset=0, y_offset=0):
+        x, y = (WIDTH - 480) / 2, HEIGHT - 148
+        self.screen.blit(self.font_elements["background"], (x, y))
+        x += x_offset
+        y += y_offset
+        string = string.split()
+        for word in string:
+            if x + len(word)*16 > ((WIDTH + 480) / 2) - x_offset:
+                x = (WIDTH - 480) / 2 + x_offset
+                y += 30
+            for letter in word:
+                self.screen.blit(self.font_elements["text"][letter], (x, y))
+                x += 14
+            x += 20
 
     def new(self):
         for tile_object in self.map.tmx_data.objects:
@@ -137,6 +185,7 @@ class Game:
         for sprite in self.player_group:
             self.screen.blit(sprite.image, self.camera.apply(sprite))
         self.draw_HUD(10, 10)
+        self.draw_text("Hello this is a longish sentence. Boo!", 20, 30)
         pygame.display.flip()
 
     def events(self):
