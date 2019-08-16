@@ -1,6 +1,6 @@
-import pygame
 import itertools
 from settings import *
+import encounter
 
 
 class Spritesheet:
@@ -39,6 +39,10 @@ class Player(pygame.sprite.Sprite):
         self.level = 7
         self.max_health = 16  # multiple of 4
         self.health = 6  # less than max
+        self.coins = 0
+
+        self.npc_key = False
+        self.e_flag = False
 
     def place(self, x, y):
         self.x = x
@@ -192,6 +196,9 @@ class Player(pygame.sprite.Sprite):
                     return
                 self.vx = -PLAYER_SPEED
                 self.game.cooldown = self.game.delay
+                encounter.page_count = -1
+                self.npc_key = False
+                encounter.drawing = False
 
             elif keys[pygame.K_RIGHT] or keys[pygame.K_d]:
                 self.last_direction = "right"
@@ -206,6 +213,9 @@ class Player(pygame.sprite.Sprite):
                     return
                 self.vx = PLAYER_SPEED
                 self.game.cooldown = self.game.delay
+                encounter.page_count = -1
+                self.npc_key = False
+                encounter.drawing = False
 
             elif keys[pygame.K_UP] or keys[pygame.K_w]:
                 self.last_direction = "up"
@@ -222,6 +232,9 @@ class Player(pygame.sprite.Sprite):
                     return
                 self.vy = -PLAYER_SPEED
                 self.game.cooldown = self.game.delay
+                encounter.page_count = -1
+                self.npc_key = False
+                encounter.drawing = False
 
             elif keys[pygame.K_DOWN] or keys[pygame.K_s]:
                 self.last_direction = "down"
@@ -236,9 +249,24 @@ class Player(pygame.sprite.Sprite):
                     return
                 self.vy = PLAYER_SPEED
                 self.game.cooldown = self.game.delay
+                encounter.page_count = -1
+                self.npc_key = False
+                encounter.drawing = False
+                print(encounter.page_count)
 
             elif keys[pygame.K_SPACE]:
                 self.attacking = True
+
+            elif keys[pygame.K_e]:
+                if not encounter.drawing:
+                    self.npc_key = encounter.talk(self)
+                elif encounter.drawing and not self.e_flag:
+                    encounter.page_count += 1
+                    print(encounter.page_count)
+                    self.e_flag = True
+
+            elif not keys[pygame.K_e]:
+                self.e_flag = False
 
     def collide(self, rect, obstacle_name):
         for obstacle in self.game.obstacles:
@@ -247,9 +275,16 @@ class Player(pygame.sprite.Sprite):
                     return True
         return False
 
+    def collect_coin(self):
+        for coin in self.game.coins:
+            if self.hit_rect.colliderect(coin.rect):
+                coin.kill()
+                self.coins += 1
+
     def update(self):
         self.get_keys()
         self.animate()
+        self.collect_coin()
         self.x += self.vx * self.game.dt
         self.y += self.vy * self.game.dt
         if self.attacking and self.last_direction == "left":
@@ -283,3 +318,29 @@ class Obstacle(pygame.sprite.Sprite):
         self.x, self.y = x, y
         self.rect.x = x
         self.rect.y = y
+
+
+class Coin(pygame.sprite.Sprite):
+    def __init__(self, game, x, y, id):
+        self.groups = game.all_sprites, game.coins
+        pygame.sprite.Sprite.__init__(self, self.groups)
+        self.game = game
+        self.current_map = (game.mapX, game.mapY)
+        self.current_frame = 0
+        self.image = game.coin_sprite[self.current_frame]
+        self.rect = self.image.get_rect()
+        self.x, self.y = x, y
+        self.rect.topleft = (x,y)
+        self.last_update = 0
+        self.id = id
+
+    def animate(self):
+        now = pygame.time.get_ticks()
+        if now - self.last_update > 200:
+            self.last_update = now
+            self.current_frame = (self.current_frame + 1) % 4
+            self.image = self.game.coin_sprite[self.current_frame]
+
+    def update(self):
+        self.animate()
+

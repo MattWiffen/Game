@@ -1,5 +1,4 @@
 import pytmx
-import pygame
 from settings import *
 
 

@@ -2,6 +2,7 @@ import sys
 from sprites import *
 from map import *
 from settings import *
+import encounter
 import os
 
 
@@ -29,10 +30,13 @@ class Game:
         self.font_spritesheet = Spritesheet(os.path.join(sprite_folder, "font.png"))
         self.all_sprites = pygame.sprite.Group()
         self.player_group = pygame.sprite.Group()
-        self.npcs = pygame.sprite.Group()
+        self.coins = pygame.sprite.Group()
+        self.coin_ids = []
+        self.load_coin_sprite()
         self.load_map(self.map_folder, LOCATION[self.mapX][self.mapY])
         self.load_HUD()
         self.load_font()
+        encounter.load_text(20, 30)
 
         self.sound_walking = []
         self.sound_sword = pygame.mixer.Sound(os.path.join(sound_folder, SOUND_SWORD))
@@ -61,7 +65,8 @@ class Game:
                 self.objects_spritesheet.get_image(96, 2, 14, 13),
                 self.objects_spritesheet.get_image(80, 2, 14, 13),
                 self.objects_spritesheet.get_image(64, 2, 14, 13),
-            ]
+            ],
+            "coins": self.objects_spritesheet.get_image(64, 291, 63, 25)
         }
 
     def load_font(self):
@@ -99,6 +104,14 @@ class Game:
             self.font_elements["text"][i] = self.font_spritesheet.get_image(count, 16, 8, 16)
             count += 8
 
+    def load_coin_sprite(self):
+        self.coin_sprite = [
+            self.objects_spritesheet.get_image(2, 66, 11, 11),
+            self.objects_spritesheet.get_image(18, 66, 11, 11),
+            self.objects_spritesheet.get_image(34, 66, 11, 11),
+            self.objects_spritesheet.get_image(50, 66, 11, 11)
+        ]
+
     def load_map(self, map_folder, map_name):
         self.map = TiledMap(os.path.join(map_folder, map_name))
         self.map_img = self.map.make_map()
@@ -106,6 +119,7 @@ class Game:
         self.load_objects()
 
     def load_objects(self):
+        self.npcs = pygame.sprite.Group()
         self.obstacles = pygame.sprite.Group()
         for tile_object in self.map.tmx_data.objects:
             if tile_object.name == "obstacle":
@@ -115,21 +129,44 @@ class Game:
                     tile_object.y * 2,
                     tile_object.width * 2,
                     tile_object.height * 2,
-                    tile_object.type,
+                    tile_object.type
                 )
             if tile_object.name == "NPC":
                 NPC(self, tile_object.x*2, tile_object.y*2)
+
+            if tile_object.name == "coin":
+                coin_id = str(self.mapX) + str(self.mapY) + str(tile_object.x) + str(tile_object.y)
+                if coin_id not in self.coin_ids:
+                    Coin(
+                        self,
+                        tile_object.x * 2,
+                        tile_object.y * 2,
+                        coin_id
+                    )
+                self.coin_ids.append(coin_id)
 
         self.camera = Camera(self.map.width, self.map.height)
 
     def draw_HUD(self, x, y):
         self.screen.blit(self.HUD_elements["back"], (x, y))
+        self.screen.blit(self.HUD_elements["coins"], (WIDTH - 126 - x, HEIGHT - 50 - y))
+
         if self.player.level - 10 < 0:
             self.screen.blit(self.HUD_elements["numbers"][self.player.level], (x + 24, y + 66))
         else:
             self.screen.blit(self.HUD_elements["numbers"][int(str(self.player.level)[0])], (x+8, y+66))
             self.screen.blit(self.HUD_elements["numbers"][int(str(self.player.level)[1])], (x+24, y+66))
         self.screen.blit(self.HUD_elements["sword"], (x+14, y+14))
+
+        self.screen.blit(self.HUD_elements["numbers"]
+                         [self.player.coins % 10],
+                         (WIDTH - 126 - x + 96, HEIGHT - 50 - y + 16))
+        self.screen.blit(self.HUD_elements["numbers"]
+                         [int((self.player.coins % 100 - self.player.coins % 10) / 10)],
+                         (WIDTH - 126 - x + 76, HEIGHT - 50 - y + 16))
+        self.screen.blit(self.HUD_elements["numbers"]
+                         [int((self.player.coins % 1000 - self.player.coins % 100 - self.player.coins % 10) / 10)],
+                         (WIDTH - 126 - x + 56, HEIGHT - 50 - y + 16))
 
         for i in range(self.player.max_health // 4):
             self.screen.blit(self.HUD_elements["health"][0], (x + 60 + i * 32, y + 10))
@@ -151,7 +188,7 @@ class Game:
                 y += 30
             for letter in word:
                 self.screen.blit(self.font_elements["text"][letter], (x, y))
-                x += 14
+                x += 16
             x += 20
 
     def new(self):
@@ -182,10 +219,18 @@ class Game:
         for sprite in self.npcs:
             if sprite.current_map == (self.mapX, self.mapY):
                 self.screen.blit(sprite.image, self.camera.apply(sprite))
+        for sprite in self.coins:
+            if sprite.current_map == (self.mapX, self.mapY):
+                self.screen.blit(sprite.image, self.camera.apply(sprite))
         for sprite in self.player_group:
             self.screen.blit(sprite.image, self.camera.apply(sprite))
         self.draw_HUD(10, 10)
-        self.draw_text("Hello this is a longish sentence. Boo!", 20, 30)
+        if self.player.npc_key:
+            try:
+                encounter.draw_text(self, self.player.npc_key, 20, 30)
+            except IndexError:
+                self.player.npc_key = False
+                encounter.drawing = False
         pygame.display.flip()
 
     def events(self):
