@@ -78,3 +78,4 @@ def talk(player):
         if player.collide(new_rect, key):
             drawing = True
             return key
+
