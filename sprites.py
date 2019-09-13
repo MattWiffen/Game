@@ -26,6 +26,7 @@ class Player(pygame.sprite.Sprite):
         self.last_update_walk = 0
         self.current_frame_atk = 0
         self.last_update_atk = 0
+        self.last_update_hurt = 0
         self.sound_walking_loop = itertools.cycle(self.game.sound_walking)
         self.last_direction = "down"
         self.load_images()
@@ -38,7 +39,7 @@ class Player(pygame.sprite.Sprite):
 
         self.level = 7
         self.max_health = 16  # multiple of 4
-        self.health = 6  # less than max
+        self.health = 16  # less than max
         self.coins = 0
 
         self.npc_key = False
@@ -196,7 +197,7 @@ class Player(pygame.sprite.Sprite):
                     return
                 self.vx = -PLAYER_SPEED
                 self.game.cooldown = self.game.delay
-                encounter.page_count = -1
+                encounter.page_count = 0
                 self.npc_key = False
                 encounter.drawing = False
 
@@ -213,7 +214,7 @@ class Player(pygame.sprite.Sprite):
                     return
                 self.vx = PLAYER_SPEED
                 self.game.cooldown = self.game.delay
-                encounter.page_count = -1
+                encounter.page_count = 0
                 self.npc_key = False
                 encounter.drawing = False
 
@@ -232,7 +233,7 @@ class Player(pygame.sprite.Sprite):
                     return
                 self.vy = -PLAYER_SPEED
                 self.game.cooldown = self.game.delay
-                encounter.page_count = -1
+                encounter.page_count = 0
                 self.npc_key = False
                 encounter.drawing = False
 
@@ -249,10 +250,9 @@ class Player(pygame.sprite.Sprite):
                     return
                 self.vy = PLAYER_SPEED
                 self.game.cooldown = self.game.delay
-                encounter.page_count = -1
+                encounter.page_count = 0
                 self.npc_key = False
                 encounter.drawing = False
-                print(encounter.page_count)
 
             elif keys[pygame.K_SPACE]:
                 self.attacking = True
@@ -260,9 +260,9 @@ class Player(pygame.sprite.Sprite):
             elif keys[pygame.K_e]:
                 if not encounter.drawing:
                     self.npc_key = encounter.talk(self)
+
                 elif encounter.drawing and not self.e_flag:
                     encounter.page_count += 1
-                    print(encounter.page_count)
                     self.e_flag = True
 
             elif not keys[pygame.K_e]:
@@ -275,16 +275,28 @@ class Player(pygame.sprite.Sprite):
                     return True
         return False
 
-    def collect_coin(self):
-        for coin in self.game.coins:
-            if self.hit_rect.colliderect(coin.rect):
-                coin.kill()
-                self.coins += 1
+    def collect(self):
+        for collect in self.game.collects:
+            if self.hit_rect.colliderect(collect.rect):
+                collect.kill()
+                if collect.type == "coin":
+                    self.coins += 1
+                elif collect.type == "heart":
+                    self.health += 4
+
+    def hazard(self):
+        now = pygame.time.get_ticks()
+        if now - self.last_update_hurt > 1000:
+            self.last_update_hurt = now
+            for hazard in self.game.hazards:
+                if self.hit_rect.colliderect(hazard.rect):
+                    self.health -= 1
 
     def update(self):
         self.get_keys()
         self.animate()
-        self.collect_coin()
+        self.collect()
+        self.hazard()
         self.x += self.vx * self.game.dt
         self.y += self.vy * self.game.dt
         if self.attacking and self.last_direction == "left":
@@ -294,6 +306,10 @@ class Player(pygame.sprite.Sprite):
         else:
             self.rect.topleft = (self.x, self.y)
             self.hit_rect.bottomleft = self.rect.bottomleft
+        if self.health > self.max_health:
+            self.health = self.max_health
+        if self.health <= 0:
+            self.game.playing = False
 
 
 class NPC(pygame.sprite.Sprite):
@@ -320,27 +336,52 @@ class Obstacle(pygame.sprite.Sprite):
         self.rect.y = y
 
 
-class Coin(pygame.sprite.Sprite):
-    def __init__(self, game, x, y, id):
-        self.groups = game.all_sprites, game.coins
+class Collect(pygame.sprite.Sprite):
+    def __init__(self, game, x, y, cid, type):
+        self.groups = game.all_sprites, game.collects
         pygame.sprite.Sprite.__init__(self, self.groups)
         self.game = game
         self.current_map = (game.mapX, game.mapY)
         self.current_frame = 0
-        self.image = game.coin_sprite[self.current_frame]
+        self.type = type
+        self.image = game.collect_sprite[self.type][self.current_frame]
         self.rect = self.image.get_rect()
         self.x, self.y = x, y
         self.rect.topleft = (x,y)
         self.last_update = 0
-        self.id = id
+        self.id = cid
 
     def animate(self):
         now = pygame.time.get_ticks()
-        if now - self.last_update > 200:
+        if now - self.last_update > 125:
             self.last_update = now
             self.current_frame = (self.current_frame + 1) % 4
-            self.image = self.game.coin_sprite[self.current_frame]
+            self.image = self.game.collect_sprite[self.type][self.current_frame]
 
     def update(self):
         self.animate()
 
+
+class Hazard(pygame.sprite.Sprite):
+    def __init__(self, game, x, y, hid):
+        self.groups = game.all_sprites, game.hazards
+        pygame.sprite.Sprite.__init__(self, self.groups)
+        self.game = game
+        self.current_map = (game.mapX, game.mapY)
+        self.current_frame = 0
+        self.image = game.hazard_sprite[self.current_frame]
+        self.rect = self.image.get_rect()
+        self.x, self.y = x, y
+        self.rect.topleft = (x,y)
+        self.last_update = 0
+        self.id = hid
+
+    def animate(self):
+        now = pygame.time.get_ticks()
+        if now - self.last_update > 100:
+            self.last_update = now
+            self.current_frame = (self.current_frame + 1) % 7
+            self.image = self.game.hazard_sprite[self.current_frame]
+
+    def update(self):
+        self.animate()

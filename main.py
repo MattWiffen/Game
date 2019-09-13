@@ -18,6 +18,7 @@ class Game:
         self.mapX = 0
         self.mapY = 0
         self.load_data()
+        self.playing = True
 
     def load_data(self):
         game_folder = os.path.dirname(__file__)
@@ -30,9 +31,10 @@ class Game:
         self.font_spritesheet = Spritesheet(os.path.join(sprite_folder, "font.png"))
         self.all_sprites = pygame.sprite.Group()
         self.player_group = pygame.sprite.Group()
-        self.coins = pygame.sprite.Group()
-        self.coin_ids = []
-        self.load_coin_sprite()
+        self.collects = pygame.sprite.Group()
+        self.hazards = pygame.sprite.Group()
+        self.collect_ids = []
+        self.load_collect_sprite()
         self.load_map(self.map_folder, LOCATION[self.mapX][self.mapY])
         self.load_HUD()
         self.load_font()
@@ -104,12 +106,29 @@ class Game:
             self.font_elements["text"][i] = self.font_spritesheet.get_image(count, 16, 8, 16)
             count += 8
 
-    def load_coin_sprite(self):
-        self.coin_sprite = [
-            self.objects_spritesheet.get_image(2, 66, 11, 11),
-            self.objects_spritesheet.get_image(18, 66, 11, 11),
-            self.objects_spritesheet.get_image(34, 66, 11, 11),
-            self.objects_spritesheet.get_image(50, 66, 11, 11)
+    def load_collect_sprite(self):
+        self.collect_sprite = {
+            "coin": [
+                self.objects_spritesheet.get_image(2, 66, 11, 11),
+                self.objects_spritesheet.get_image(18, 66, 11, 11),
+                self.objects_spritesheet.get_image(34, 66, 11, 11),
+                self.objects_spritesheet.get_image(50, 66, 11, 11)
+            ],
+            "heart": [
+                self.objects_spritesheet.get_image(2, 51, 11, 11),
+                self.objects_spritesheet.get_image(18, 51, 11, 11),
+                self.objects_spritesheet.get_image(34, 51, 11, 11),
+                self.objects_spritesheet.get_image(50, 51, 11, 11)
+            ]
+        }
+        self.hazard_sprite = [
+            self.objects_spritesheet.get_image(64, 48, 16, 16),
+            self.objects_spritesheet.get_image(80, 48, 16, 16),
+            self.objects_spritesheet.get_image(96, 48, 16, 16),
+            self.objects_spritesheet.get_image(112, 48, 16, 16),
+            self.objects_spritesheet.get_image(128, 48, 16, 16),
+            self.objects_spritesheet.get_image(144, 48, 16, 16),
+            self.objects_spritesheet.get_image(160, 48, 16, 16)
         ]
 
     def load_map(self, map_folder, map_name):
@@ -134,16 +153,31 @@ class Game:
             if tile_object.name == "NPC":
                 NPC(self, tile_object.x*2, tile_object.y*2)
 
-            if tile_object.name == "coin":
-                coin_id = str(self.mapX) + str(self.mapY) + str(tile_object.x) + str(tile_object.y)
-                if coin_id not in self.coin_ids:
-                    Coin(
+            if tile_object.name == "collect":
+                x = 0
+                collect_id = str(self.mapX) + str(self.mapY) + str(tile_object.x) + str(tile_object.y)
+                if collect_id not in self.collect_ids:
+                    if tile_object.type == "coin" or tile_object.type == "heart":
+                        x = 5
+                    Collect(
+                        self,
+                        x + tile_object.x * 2,
+                        x + tile_object.y * 2,
+                        collect_id,
+                        tile_object.type
+                    )
+                    self.collect_ids.append(collect_id)
+
+            if tile_object.name == "hazard":
+                hazard_id = str(self.mapX) + str(self.mapY) + str(tile_object.x) + str(tile_object.y)
+                if hazard_id not in self.collect_ids:
+                    Hazard(
                         self,
                         tile_object.x * 2,
                         tile_object.y * 2,
-                        coin_id
+                        hazard_id
                     )
-                self.coin_ids.append(coin_id)
+                    self.collect_ids.append(hazard_id)
 
         self.camera = Camera(self.map.width, self.map.height)
 
@@ -173,8 +207,10 @@ class Game:
         j = 0
         for j in range(self.player.health // 4):
             self.screen.blit(self.HUD_elements["health"][4], (x + 60 + j * 32, y + 10))
-        if not self.player.health % 4 == 0:
+        if not self.player.health % 4 == 0 and self.player.health // 4 != 0:
             self.screen.blit(self.HUD_elements["health"][self.player.health % 4], (x + 92 + j * 32, y + 10))
+        elif not self.player.health % 4 == 0 and self.player.health // 4 == 0:
+            self.screen.blit(self.HUD_elements["health"][self.player.health % 4], (x + 60 + j * 32, y + 10))
 
     def draw_text(self, string, x_offset=0, y_offset=0):
         x, y = (WIDTH - 480) / 2, HEIGHT - 148
@@ -198,7 +234,7 @@ class Game:
 
     def run(self):
         # game loop - set self.playing = False to end the game
-        while True:
+        while self.playing:
             self.dt = self.clock.tick(FPS) / 1000
             self.cooldown -= self.dt
             self.events()
@@ -219,18 +255,58 @@ class Game:
         for sprite in self.npcs:
             if sprite.current_map == (self.mapX, self.mapY):
                 self.screen.blit(sprite.image, self.camera.apply(sprite))
-        for sprite in self.coins:
+        for sprite in self.collects:
             if sprite.current_map == (self.mapX, self.mapY):
                 self.screen.blit(sprite.image, self.camera.apply(sprite))
+        for sprite in self.hazards:
+            if sprite.y <= self.player.y:
+                if sprite.current_map == (self.mapX, self.mapY):
+                    self.screen.blit(sprite.image, self.camera.apply(sprite))
         for sprite in self.player_group:
             self.screen.blit(sprite.image, self.camera.apply(sprite))
+        for sprite in self.hazards:
+            if sprite.y > self.player.y:
+                if sprite.current_map == (self.mapX, self.mapY):
+                    self.screen.blit(sprite.image, self.camera.apply(sprite))
         self.draw_HUD(10, 10)
         if self.player.npc_key:
-            try:
-                encounter.draw_text(self, self.player.npc_key, 20, 30)
-            except IndexError:
-                self.player.npc_key = False
-                encounter.drawing = False
+            if not encounter.PROGRESS[self.player.npc_key]["started"]:
+                try:
+                    encounter.draw_text(self, self.player.npc_key, "start", 20, 30)
+                except IndexError:
+                    encounter.PROGRESS[self.player.npc_key]["started"] = True
+                    self.player.npc_key = False
+                    encounter.drawing = False
+                    self.completion = False
+            elif encounter.PROGRESS[self.player.npc_key]["started"] is True\
+                    and encounter.PROGRESS[self.player.npc_key]["finished"] is False\
+                    and not encounter.questOBJ(self.player.npc_key, self.player):
+                try:
+                    encounter.draw_text(self, self.player.npc_key, "remind", 20, 30)
+                except IndexError:
+                    self.player.npc_key = False
+                    encounter.drawing = False
+                    self.completion = False
+            elif encounter.PROGRESS[self.player.npc_key]["started"] is True\
+                    and encounter.PROGRESS[self.player.npc_key]["finished"] is False\
+                    and encounter.questOBJ(self.player.npc_key, self.player):
+                try:
+                    encounter.draw_text(self, self.player.npc_key, "end", 20, 30)
+                    self.completion = True
+                except IndexError:
+                    if self.completion is True:
+                        encounter.questCOMPLETE(self.player.npc_key, self.player)
+                        encounter.PROGRESS[self.player.npc_key]["finished"] = True
+                    self.player.npc_key = False
+                    encounter.drawing = False
+            elif encounter.PROGRESS[self.player.npc_key]["started"] is True\
+                    and encounter.PROGRESS[self.player.npc_key]["finished"] is True:
+                try:
+                    encounter.draw_text(self, self.player.npc_key, "misc", 20, 30)
+                except IndexError:
+                    self.player.npc_key = False
+                    encounter.drawing = False
+                    self.completion = False
         pygame.display.flip()
 
     def events(self):
@@ -244,6 +320,6 @@ class Game:
 
 # create the game object
 g = Game()
-while True:
-    g.new()
-    g.run()
+#while True:
+g.new()
+g.run()

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.2" tiledversion="1.2.4" orientation="orthogonal" renderorder="right-down" width="30" height="30" tilewidth="16" tileheight="16" infinite="0" nextlayerid="13" nextobjectid="38">
+<map version="1.2" tiledversion="2019.05.08" orientation="orthogonal" renderorder="right-down" width="30" height="30" tilewidth="16" tileheight="16" infinite="0" nextlayerid="13" nextobjectid="45">
  <tileset firstgid="1" source="zelda_style.tsx"/>
  <layer id="1" name="terrain" width="30" height="30">
   <data encoding="csv">
@@ -340,5 +340,12 @@
   <object id="33" name="obstacle" type="left" x="-12" y="4" width="8" height="472"/>
   <object id="34" name="NPC" type="npc1" x="80" y="160" width="16" height="16"/>
   <object id="37" name="obstacle" type="npc1" x="84" y="180" width="8" height="8"/>
+  <object id="38" name="collect" type="coin" x="80" y="272" width="16" height="16"/>
+  <object id="39" name="collect" type="coin" x="96" y="272" width="16" height="16"/>
+  <object id="40" name="collect" type="coin" x="112" y="272" width="16" height="16"/>
+  <object id="41" name="collect" type="coin" x="80" y="288" width="16" height="16"/>
+  <object id="42" name="collect" type="coin" x="96" y="288" width="16" height="16"/>
+  <object id="43" name="collect" type="coin" x="112" y="288" width="16" height="16"/>
+  <object id="44" name="collect" type="coin" x="80" y="304" width="16" height="16"/>
  </objectgroup>
 </map>
