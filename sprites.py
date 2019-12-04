@@ -37,10 +37,11 @@ class Player(pygame.sprite.Sprite):
         self.vx, self.vy = 0, 0
         self.x, self.y = x, y
 
-        self.level = 7
+        self.level = 1
         self.max_health = 16  # multiple of 4
         self.health = 16  # less than max
         self.coins = 0
+        self.xp = 75
 
         self.npc_key = False
         self.e_flag = False
@@ -151,19 +152,19 @@ class Player(pygame.sprite.Sprite):
                     self.rect = self.image.get_rect()
                     self.rect.left = left
 
-                elif self.last_direction == "down" and self.attacking is True:
+                if self.last_direction == "down" and self.attacking is True:
                     self.image = self.frames["attack_down"][self.current_frame_atk]
                     left = self.rect.left
                     self.rect = self.image.get_rect()
                     self.rect.left = left
 
-                elif self.last_direction == "up" and self.attacking is True:
+                if self.last_direction == "up" and self.attacking is True:
                     self.image = self.frames["attack_up"][self.current_frame_atk]
                     left = self.rect.left
                     self.rect = self.image.get_rect()
                     self.rect.left = left
 
-                elif self.last_direction == "left" and self.attacking is True:
+                if self.last_direction == "left" and self.attacking is True:
                     self.right = self.rect.right
                     self.image = self.frames["attack_left"][self.current_frame_atk]
                     self.rect = self.image.get_rect()
@@ -281,6 +282,7 @@ class Player(pygame.sprite.Sprite):
                 collect.kill()
                 if collect.type == "coin":
                     self.coins += 1
+                    self.xp += 10
                 elif collect.type == "heart":
                     self.health += 4
 
@@ -292,11 +294,18 @@ class Player(pygame.sprite.Sprite):
                 if self.hit_rect.colliderect(hazard.rect):
                     self.health -= 1
 
+    def level_up(self):
+        if self.xp > 100:
+            self.level += 1
+            self.xp -= 100
+            self.max_health += 4
+
     def update(self):
         self.get_keys()
         self.animate()
         self.collect()
         self.hazard()
+        self.level_up()
         self.x += self.vx * self.game.dt
         self.y += self.vy * self.game.dt
         if self.attacking and self.last_direction == "left":
@@ -385,3 +394,32 @@ class Hazard(pygame.sprite.Sprite):
 
     def update(self):
         self.animate()
+
+
+class Button(pygame.sprite.Sprite):
+    def __init__(self, game, up, down, name):
+        self.groups = game.buttons
+        pygame.sprite.Sprite.__init__(self, self.groups)
+        self.game = game
+        self.image = up
+        self.up = up
+        self.down = down
+        self.name = name
+        self.rect = self.image.get_rect()
+        self.pos = (0, 0)
+
+    def is_pressed(self):
+        position = pygame.mouse.get_pos()
+        if self.rect.collidepoint(position) and self.game.click_down:
+            self.image = self.down
+        elif not self.game.click_down:
+            self.image = self.up
+
+    def end_pause(self):
+        position = pygame.mouse.get_pos()
+        if self.rect.collidepoint(position):
+            self.game.playing = True
+
+    def update(self):
+        self.rect.topleft = self.pos
+        self.is_pressed()

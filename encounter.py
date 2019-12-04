@@ -50,6 +50,7 @@ def questCOMPLETE(key, player):
     if key == "npc1":
         if player.coins >= 6:
             player.coins -= 6
+        player.xp += 75
 
 
 def load_text(x_offset=0, y_offset=0):

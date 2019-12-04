@@ -11,20 +11,23 @@ class Game:
         pygame.mixer.pre_init(44100, -16, 4, 2048)
         pygame.init()
         self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
-        pygame.display.set_caption("Title")
+        pygame.display.set_caption("Roberto's Adventure")
         self.clock = pygame.time.Clock()
         self.cooldown = 0
         self.delay = 0.2
         self.mapX = 0
         self.mapY = 0
+        self.click_down = False
         self.load_data()
         self.playing = True
+
 
     def load_data(self):
         game_folder = os.path.dirname(__file__)
         sprite_folder = os.path.join(game_folder, "sprites")
         sound_folder = os.path.join(game_folder, "sounds")
         self.map_folder = os.path.join(game_folder, "maps")
+        self.pause_folder = os.path.join(game_folder, "pause")
         self.spritesheet = Spritesheet(os.path.join(sprite_folder, "character.png"))
         self.NPC_spritesheet = Spritesheet(os.path.join(sprite_folder, "NPC.png"))
         self.objects_spritesheet = Spritesheet(os.path.join(sprite_folder, "objects.png"))
@@ -33,17 +36,30 @@ class Game:
         self.player_group = pygame.sprite.Group()
         self.collects = pygame.sprite.Group()
         self.hazards = pygame.sprite.Group()
+        self.buttons = pygame.sprite.Group()
         self.collect_ids = []
         self.load_collect_sprite()
         self.load_map(self.map_folder, LOCATION[self.mapX][self.mapY])
         self.load_HUD()
         self.load_font()
+        self.load_pause()
         encounter.load_text(20, 30)
 
         self.sound_walking = []
         self.sound_sword = pygame.mixer.Sound(os.path.join(sound_folder, SOUND_SWORD))
         for effect in SOUND_WALKING:
             self.sound_walking.append(pygame.mixer.Sound(os.path.join(sound_folder, effect)))
+
+    def load_pause(self):
+        font = pygame.font.Font(os.path.join(self.pause_folder, "font.ttf"), 64)
+        self.pause_elements = {
+            "panel": pygame.image.load(os.path.join(self.pause_folder, 'panel2.png')),
+            "pause_title": font.render("Paused", True, (0,0,0), pygame.SRCALPHA),
+            "return_button": Button(self,
+                                pygame.image.load(os.path.join(self.pause_folder, 'button_up.png')),
+                                pygame.image.load(os.path.join(self.pause_folder, "button_down.png")),
+                                "return")
+        }
 
     def load_HUD(self):
         self.HUD_elements = {
@@ -68,7 +84,8 @@ class Game:
                 self.objects_spritesheet.get_image(80, 2, 14, 13),
                 self.objects_spritesheet.get_image(64, 2, 14, 13),
             ],
-            "coins": self.objects_spritesheet.get_image(64, 291, 63, 25)
+            "coins": self.objects_spritesheet.get_image(64, 291, 63, 25),
+            "xp_bar": self.objects_spritesheet.get_image(7, 298, 54, 3)
         }
 
     def load_font(self):
@@ -183,6 +200,8 @@ class Game:
 
     def draw_HUD(self, x, y):
         self.screen.blit(self.HUD_elements["back"], (x, y))
+        xp_percent = self.player.xp / 100
+        self.screen.blit(self.HUD_elements["xp_bar"].subsurface(pygame.Rect(0, 0, min(xp_percent * 108, 108), 3)), (x + 44, y + 80))
         self.screen.blit(self.HUD_elements["coins"], (WIDTH - 126 - x, HEIGHT - 50 - y))
 
         if self.player.level - 10 < 0:
@@ -227,6 +246,15 @@ class Game:
                 x += 16
             x += 20
 
+    def draw_pause(self):
+        height = HEIGHT/8
+        width = WIDTH/8
+        self.screen.blit(self.pause_elements["panel"], (width, height))
+        self.screen.blit(self.pause_elements["pause_title"], (width + (480-318)/2, height+35))
+        self.pause_elements["return_button"].pos = (width + (480-190)/2, height + (480 * 3/4))
+        self.screen.blit(self.pause_elements["return_button"].image, self.pause_elements["return_button"].pos)
+        # (318, 73)
+
     def new(self):
         for tile_object in self.map.tmx_data.objects:
             if tile_object.name == "player":
@@ -234,7 +262,7 @@ class Game:
 
     def run(self):
         # game loop - set self.playing = False to end the game
-        while self.playing:
+        while True:
             self.dt = self.clock.tick(FPS) / 1000
             self.cooldown -= self.dt
             self.events()
@@ -247,8 +275,11 @@ class Game:
 
     def update(self):
         # update portion of the game loop
-        self.all_sprites.update()
-        self.camera.update(self.player)
+        if self.playing:
+            self.all_sprites.update()
+            self.camera.update(self.player)
+        else:
+            self.buttons.update()
 
     def draw(self):
         self.screen.blit(self.map_img, self.camera.apply_rect(self.map_rect))
@@ -307,6 +338,9 @@ class Game:
                     self.player.npc_key = False
                     encounter.drawing = False
                     self.completion = False
+
+        if not self.playing:
+            self.draw_pause()
         pygame.display.flip()
 
     def events(self):
@@ -316,6 +350,14 @@ class Game:
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     self.quit()
+                if event.key == pygame.K_p:
+                    self.playing = not self.playing
+            if not self.playing:
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    self.click_down = True
+                if event.type == pygame.MOUSEBUTTONUP:
+                    self.click_down = False
+                    self.pause_elements["return_button"].end_pause()
 
 
 # create the game object
